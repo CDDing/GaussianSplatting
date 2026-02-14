@@ -45,11 +45,17 @@ add_executable(GaussianSplatting
     Vulkan/Buffer.cpp
     Vulkan/CommandManager.cpp
     Vulkan/Renderer.cpp
+    Loader/PlyLoader.cpp
+    3rdparty/miniply/miniply.cpp
 )
 
 add_dependencies(GaussianSplatting Shaders)
 
-target_include_directories(GaussianSplatting PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Header)
+target_include_directories(GaussianSplatting PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Header
+    ${CMAKE_CURRENT_SOURCE_DIR}/Loader
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/miniply
+)
 target_link_libraries(GaussianSplatting PRIVATE
     glm::glm
     Vulkan::Vulkan

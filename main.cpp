@@ -1,8 +1,9 @@
 #include "App/App.h"
 
-int main() {
+int main(int argc, char* argv[]) {
     try {
         App app(1600, 900, "Gaussian Splatting");
+        app.LoadPLY(argv[1]);
         app.Run();
     } catch (const std::exception& e) {
         std::cerr << "Fatal error: " << e.what() << std::endl;

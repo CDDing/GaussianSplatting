@@ -7,6 +7,7 @@
 #include "../Vulkan/CommandManager.h"
 #include "../Vulkan/Renderer.h"
 #include "../Vulkan/Vertex.h"
+#include "PlyLoader.h"
 
 class App {
 public:
@@ -17,6 +18,7 @@ public:
     App& operator=(const App&) = delete;
 
     void Run();
+    void LoadPLY(const char* filename);
 
 private:
     GLFWwindow* window_ = nullptr;
@@ -28,6 +30,7 @@ private:
     std::unique_ptr<Buffer> vertexBuffer_;
     std::unique_ptr<CommandManager> commandManager_;
     std::unique_ptr<Renderer> renderer_;
+    std::unique_ptr<SplatSet> splatSet_;
 
     bool framebufferResized_ = false;
 

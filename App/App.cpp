@@ -21,6 +21,7 @@ App::~App() {
     vertexBuffer_.reset();
     pipeline_.reset();
     swapchain_.reset();
+    splatSet_.reset();
     context_.reset();
 
     if (window_) {
@@ -84,6 +85,18 @@ void App::initVulkan() {
 
 void App::Run() {
     mainLoop();
+}
+
+void App::LoadPLY(const char* filename)
+{
+    auto splatSet = std::make_unique<SplatSet>();
+    if (!loadPly(filename, *splatSet)) {
+        std::cerr << "Failed to load PLY: " << filename << std::endl;
+        return;
+    }
+
+    std::cout << "Loaded " << splatSet->size() << " splats" << std::endl;
+    splatSet_ = std::move(splatSet);
 }
 
 void App::mainLoop() {
