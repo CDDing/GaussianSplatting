@@ -1,0 +1,9 @@
+{
+  "name": "gaussian-splatting",
+  "version": "0.1.0",
+  "dependencies": [
+    "glfw3",
+    "glm",
+    "vulkan-memory-allocator"
+  ]
+}

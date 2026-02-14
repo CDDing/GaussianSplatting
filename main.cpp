@@ -1,14 +1,12 @@
-#include <iostream>
-#include <vulkan/vulkan_raii.hpp>
+#include "App/App.h"
 
-int main()
-{
-    auto lang = "C++";
-    std::cout << "Hello and welcome to " << lang << "!\n";
-    for (int i = 1; i <= 5; i++)
-    {
-        std::cout << "i = " << i << std::endl;
+int main() {
+    try {
+        App app(1600, 900, "Gaussian Splatting");
+        app.Run();
+    } catch (const std::exception& e) {
+        std::cerr << "Fatal error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
-
-    return 0;
+    return EXIT_SUCCESS;
 }
