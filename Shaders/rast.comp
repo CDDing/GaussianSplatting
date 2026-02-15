@@ -1,0 +1,8 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+// TODO: per-tile rasterization (alpha-blended splats → framebuffer)
+
+void main() {
+}

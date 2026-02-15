@@ -61,104 +61,10 @@ void Pipeline::createRenderPass(Context& context, const Swapchain& swapchain) {
 }
 
 void Pipeline::createPipeline(Context& context, const Swapchain& swapchain) {
-    // Load shaders
-    auto vertCode = loadShader("Shaders/triangle.vert.spv");
-    auto fragCode = loadShader("Shaders/triangle.frag.spv");
-
-    // Create shader modules
-    vk::ShaderModuleCreateInfo vertModuleInfo{};
-    vertModuleInfo.setCode(vertCode);
-    vk::raii::ShaderModule vertModule = context.Device().createShaderModule(vertModuleInfo);
-
-    vk::ShaderModuleCreateInfo fragModuleInfo{};
-    fragModuleInfo.setCode(fragCode);
-    vk::raii::ShaderModule fragModule = context.Device().createShaderModule(fragModuleInfo);
-
-    // Shader stages
-    vk::PipelineShaderStageCreateInfo vertStageInfo{};
-    vertStageInfo.setStage(vk::ShaderStageFlagBits::eVertex);
-    vertStageInfo.setModule(*vertModule);
-    vertStageInfo.setPName("main");
-
-    vk::PipelineShaderStageCreateInfo fragStageInfo{};
-    fragStageInfo.setStage(vk::ShaderStageFlagBits::eFragment);
-    fragStageInfo.setModule(*fragModule);
-    fragStageInfo.setPName("main");
-
-    std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = {vertStageInfo, fragStageInfo};
-
-    // Vertex input
-    auto bindingDescription = Vertex::getBindingDescription();
-    auto attributeDescriptions = Vertex::getAttributeDescriptions();
-
-    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.setVertexBindingDescriptions(bindingDescription);
-    vertexInputInfo.setVertexAttributeDescriptions(attributeDescriptions);
-
-    // Input assembly
-    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
-    inputAssembly.setTopology(vk::PrimitiveTopology::eTriangleList);
-    inputAssembly.setPrimitiveRestartEnable(VK_FALSE);
-
-    // Viewport and scissor (dynamic - set per frame in Renderer)
-    vk::PipelineViewportStateCreateInfo viewportState{};
-    viewportState.setViewportCount(1);
-    viewportState.setScissorCount(1);
-
-    // Rasterizer
-    vk::PipelineRasterizationStateCreateInfo rasterizer{};
-    rasterizer.setDepthClampEnable(VK_FALSE);
-    rasterizer.setRasterizerDiscardEnable(VK_FALSE);
-    rasterizer.setPolygonMode(vk::PolygonMode::eFill);
-    rasterizer.setLineWidth(1.0f);
-    rasterizer.setCullMode(vk::CullModeFlagBits::eNone);
-    rasterizer.setFrontFace(vk::FrontFace::eCounterClockwise);
-    rasterizer.setDepthBiasEnable(VK_FALSE);
-
-    // Multisample
-    vk::PipelineMultisampleStateCreateInfo multisampling{};
-    multisampling.setSampleShadingEnable(VK_FALSE);
-    multisampling.setRasterizationSamples(vk::SampleCountFlagBits::e1);
-
-    // Color blend attachment
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.setBlendEnable(VK_FALSE);
-    colorBlendAttachment.setColorWriteMask(
-        vk::ColorComponentFlagBits::eR |
-        vk::ColorComponentFlagBits::eG |
-        vk::ColorComponentFlagBits::eB |
-        vk::ColorComponentFlagBits::eA);
-
-    vk::PipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.setLogicOpEnable(VK_FALSE);
-    colorBlending.setAttachments(colorBlendAttachment);
-
     // Pipeline layout (no push constants, no descriptor set layouts)
     vk::PipelineLayoutCreateInfo layoutInfo{};
     layout_ = context.Device().createPipelineLayout(layoutInfo);
 
-    // Create graphics pipeline
-    vk::GraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.setStages(shaderStages);
-    pipelineInfo.setPVertexInputState(&vertexInputInfo);
-    pipelineInfo.setPInputAssemblyState(&inputAssembly);
-    pipelineInfo.setPViewportState(&viewportState);
-    pipelineInfo.setPRasterizationState(&rasterizer);
-    pipelineInfo.setPMultisampleState(&multisampling);
-    pipelineInfo.setPDepthStencilState(nullptr);
-    // Dynamic state
-    std::array<vk::DynamicState, 2> dynamicStates = {
-        vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor
-    };
-    vk::PipelineDynamicStateCreateInfo dynamicState{};
-    dynamicState.setDynamicStates(dynamicStates);
-
-    pipelineInfo.setPColorBlendState(&colorBlending);
-    pipelineInfo.setPDynamicState(&dynamicState);
-    pipelineInfo.setLayout(*layout_);
-    pipelineInfo.setRenderPass(*renderPass_);
-    pipelineInfo.setSubpass(0);
-
-    pipeline_ = context.Device().createGraphicsPipeline(nullptr, pipelineInfo);
+    // Graphics pipeline 생성 생략: compute-only 렌더링으로 전환 중.
+    // Render pass는 swapchain clear용으로 유지, pipeline은 추후 fullscreen quad 추가 시 생성.
 }

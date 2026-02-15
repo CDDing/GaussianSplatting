@@ -1,7 +1,9 @@
 #include "Renderer.h"
+#include "Buffer.h"
 #include "Context.h"
 #include "Swapchain.h"
 #include "Pipeline.h"
+#include "ComputePass.h"
 
 // ---------------------------------------------------------------------------
 // Constructor
@@ -66,10 +68,23 @@ void Renderer::createSyncObjects(Context& context, uint32_t swapchainImageCount)
 
 void Renderer::recordCommandBuffer(vk::CommandBuffer cmd, uint32_t imageIndex,
                                    Swapchain& swapchain, Pipeline& pipeline,
-                                   vk::Buffer vertexBuffer, uint32_t vertexCount) {
+                                   Buffer* uboStaging, Buffer* uboDevice,
+                                   ComputePass* projPass, ComputePass* sortPass,
+                                   ComputePass* rasterPass) {
     vk::CommandBufferBeginInfo beginInfo{};
     cmd.begin(beginInfo);
 
+    // Staging → Device UBO copy
+    if (uboStaging && uboDevice) {
+        uboStaging->RecordCopy(cmd, *uboDevice);
+    }
+
+    // ─── Compute passes ───
+    if (projPass)   projPass->Record(cmd);
+    if (sortPass)   sortPass->Record(cmd);
+    if (rasterPass) rasterPass->Record(cmd);
+
+    // ─── Render pass ───
     vk::ClearValue clearColor{vk::ClearColorValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}}};
 
     vk::RenderPassBeginInfo renderPassInfo{};
@@ -80,26 +95,7 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer cmd, uint32_t imageIndex,
     renderPassInfo.setClearValues(clearColor);
 
     cmd.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-    cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.GetHandle());
-
-    // Dynamic viewport and scissor (set per frame for window resize support)
-    vk::Viewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width  = static_cast<float>(swapchain.GetExtent().width);
-    viewport.height = static_cast<float>(swapchain.GetExtent().height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    cmd.setViewport(0, viewport);
-
-    vk::Rect2D scissor{};
-    scissor.offset = vk::Offset2D{0, 0};
-    scissor.extent = swapchain.GetExtent();
-    cmd.setScissor(0, scissor);
-
-    cmd.bindVertexBuffers(0, vertexBuffer, vk::DeviceSize{0});
-    cmd.draw(vertexCount, 1, 0, 0);
-
+    // TODO: fullscreen quad (graphics pipeline + draw call)
     cmd.endRenderPass();
     cmd.end();
 }
@@ -108,12 +104,17 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer cmd, uint32_t imageIndex,
 // DrawFrame
 // ---------------------------------------------------------------------------
 
+void Renderer::WaitForCurrentFrame(Context& context) {
+    context.Device().waitForFences(
+        *inFlight_[currentFrame_], VK_TRUE, UINT64_MAX);
+}
+
 bool Renderer::DrawFrame(Context& context, Swapchain& swapchain,
                          Pipeline& pipeline, CommandManager& commands,
-                         vk::Buffer vertexBuffer, uint32_t vertexCount) {
-    // Wait for previous frame's fence
-    auto waitResult = context.Device().waitForFences(
-        *inFlight_[currentFrame_], VK_TRUE, UINT64_MAX);
+                         Buffer* uboStaging, Buffer* uboDevice,
+                         ComputePass* projPass, ComputePass* sortPass,
+                         ComputePass* rasterPass) {
+    // Fence already waited by WaitForCurrentFrame() before UBO upload
 
     // Acquire next swapchain image
     auto [result, imageIndex] = swapchain.GetHandle().acquireNextImage(
@@ -129,7 +130,9 @@ bool Renderer::DrawFrame(Context& context, Swapchain& swapchain,
     auto& cmdBuffers = commands.GetCommandBuffers();
     cmdBuffers[currentFrame_].reset();
     recordCommandBuffer(*cmdBuffers[currentFrame_], imageIndex,
-                        swapchain, pipeline, vertexBuffer, vertexCount);
+                        swapchain, pipeline,
+                        uboStaging, uboDevice,
+                        projPass, sortPass, rasterPass);
 
     // Submit
     vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 4.1)
 
+add_compile_options(/utf-8)
+
 project(GaussianSplatting)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -14,12 +16,12 @@ find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_program(GLSLC glslc HINTS $ENV{VULKAN_SDK}/Bin)
 
 set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Shaders)
-set(SHADER_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Shaders)
-file(MAKE_DIRECTORY ${SHADER_OUT_DIR})
+set(SHADER_OUT_DIR ${SHADER_DIR})
 
 set(SHADER_SOURCES
-    ${SHADER_DIR}/triangle.vert
-    ${SHADER_DIR}/triangle.frag
+    ${SHADER_DIR}/proj.comp
+    ${SHADER_DIR}/sort.comp
+    ${SHADER_DIR}/rast.comp
 )
 
 foreach(SHADER ${SHADER_SOURCES})
@@ -39,12 +41,17 @@ add_custom_target(Shaders DEPENDS ${SHADER_SPV_FILES})
 add_executable(GaussianSplatting
     main.cpp
     App/App.cpp
+    App/Camera.cpp
     Vulkan/Context.cpp
     Vulkan/Swapchain.cpp
     Vulkan/Pipeline.cpp
     Vulkan/Buffer.cpp
     Vulkan/CommandManager.cpp
     Vulkan/Renderer.cpp
+    Vulkan/ComputePipeline.cpp
+    Vulkan/ProjectionPass.cpp
+    Vulkan/SortPass.cpp
+    Vulkan/RasterPass.cpp
     Loader/PlyLoader.cpp
     3rdparty/miniply/miniply.cpp
 )

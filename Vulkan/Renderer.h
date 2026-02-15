@@ -5,6 +5,8 @@
 class Context;
 class Swapchain;
 class Pipeline;
+class Buffer;
+class ComputePass;
 
 class Renderer {
 public:
@@ -17,10 +19,16 @@ public:
     // Returns true if swapchain needs recreation
     bool DrawFrame(Context& context, Swapchain& swapchain,
                    Pipeline& pipeline, CommandManager& commands,
-                   vk::Buffer vertexBuffer, uint32_t vertexCount);
+                   Buffer* uboStaging, Buffer* uboDevice,
+                   ComputePass* projPass, ComputePass* sortPass, ComputePass* rasterPass);
 
     void RecreateFramebuffers(Context& context, Swapchain& swapchain,
-                              Pipeline& pipeline);
+    Pipeline& pipeline);
+
+    uint32_t GetCurrentFrame() const { return currentFrame_; }
+
+    // Wait for current frame's fence (call before writing to per-frame resources)
+    void WaitForCurrentFrame(Context& context);
 
 private:
     static constexpr uint32_t FRAMES_IN_FLIGHT = CommandManager::FRAMES_IN_FLIGHT;
@@ -36,5 +44,7 @@ private:
     void createSyncObjects(Context& context, uint32_t swapchainImageCount);
     void recordCommandBuffer(vk::CommandBuffer cmd, uint32_t imageIndex,
                              Swapchain& swapchain, Pipeline& pipeline,
-                             vk::Buffer vertexBuffer, uint32_t vertexCount);
+                             Buffer* uboStaging, Buffer* uboDevice,
+                             ComputePass* projPass, ComputePass* sortPass,
+                             ComputePass* rasterPass);
 };
